@@ -1,0 +1,90 @@
+/*
+ * Copyright 2013 ShadowLordAlpha (Bukkit username/pen name)
+ * 
+ * This file is part of Block Messenger.
+ *
+ *  Block Messenger is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Block Messenger is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Block Messenger.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package com.gmail.alpha70.shadow;
+
+import java.io.IOException;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.plugin.java.JavaPlugin;
+
+public class BlockMsg extends JavaPlugin {
+
+	private FileConfiguration config;
+
+	public void onEnable() {
+		config = getConfig();
+		// if you change things in this plugin please keep this message
+		getLogger().info("Base BlockMsg created by: shadowlordalpha");
+		config.options().copyDefaults(true);
+		config.addDefault("Permissions.sendMsg", true);
+		config.addDefault("Permissions.help", "&4You Do Not Have The Permission blockmsg.help!");
+		config.addDefault("Permissions.set", "&4You Do Not Have The Permission blockmsg.set!");
+		config.addDefault("Permissions.delete", "&4You Do Not Have The Permission blockmsg.delete!");
+		config.addDefault("Permissions.delall", "&4You Do Not Have The Permission blockmsg.delall!");
+		config.addDefault("Permissions.msg", "&4You Do Not Have The Permission blockmsg.msg!");
+		config.addDefault("Permissions.warp", "&4You Do Not Have The Permission blockmsg.warp!");
+		config.addDefault("Permissions.cmd", "&4You Do Not Have The Permission blockmsg.cmd!");
+		config.addDefault("Permissions.creator", "&4You Do Not Have The Permission blockmsg.creator!");
+		config.addDefault("Permissions.list", "&4You Do Not Have The Permission blockmsg.list!");
+		config.addDefault("Permissions.start", "&4You Do Not Have The Permission blockmsg.start!");
+		config.addDefault("Permissions.stop", "&4You Do Not Have The Permission blockmsg.stop!");
+		
+		config.addDefault("Message.stop.success", "");
+		config.addDefault("Message.start.success", "");
+		config.addDefault("Message.set.success", "");
+		config.addDefault("Message.warp.success", "");
+		config.addDefault("Message.delete.success", "");
+		config.addDefault("Message.delall.success", "");
+		config.addDefault("Message.cmd.success", "");
+		config.addDefault("Message.list.success", "");
+		config.addDefault("Message.creator.success", "");
+		
+		config.addDefault("Message.stop.fail", "");
+		config.addDefault("Message.start.fail", "");
+		config.addDefault("Message.set.fail", "");
+		config.addDefault("Message.warp.fail", "");
+		config.addDefault("Message.delete.fail", "");
+		config.addDefault("Message.delall.fail", "");
+		config.addDefault("Message.cmd.fail", "");
+		config.addDefault("Message.list.fail", "");
+		config.addDefault("Message.creator.fail", "");
+		
+		if (!config.isConfigurationSection("Location")) {
+			config.createSection("Location");
+		}
+		
+		
+				
+		getServer().getPluginManager().registerEvents(new BlockMsgListener(this), this);
+		saveConfig();
+		getCommand("bm").setExecutor(new BlockMsgCmds(this));
+
+		try {
+		    Metrics metrics = new Metrics(this);
+		    metrics.start();
+		} catch (IOException e) {
+		    // Failed to submit the stats :-(
+		}
+	}
+
+	public void onDisable() {
+		reloadConfig();
+		saveConfig();
+	}
+}

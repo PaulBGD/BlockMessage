@@ -1,0 +1,161 @@
+/*
+ * Copyright 2013 ShadowLordAlpha (Bukkit username/pen name)
+ * 
+ * This file is part of Block Messenger.
+ *
+ *  Block Messenger is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Block Messenger is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Block Messenger.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package com.gmail.alpha70.shadow;
+
+import java.util.HashMap;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.Server;
+import org.bukkit.World;
+import org.bukkit.block.Sign;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+
+public class BlockMsgListener implements Listener {
+	
+	BlockMsg plugin;
+	FileConfiguration config;
+	HashMap<String, String> lastMessage = new HashMap<String, String>();
+	static HashMap<String, String> signLocation = new HashMap<String, String>();
+	static HashMap<String, String> stop = new HashMap<String, String>();
+
+	public BlockMsgListener(BlockMsg main) {
+		plugin = main;
+		config = main.getConfig();
+	}
+	
+	@EventHandler
+	public void onPlayerExit(PlayerQuitEvent event) {
+		Player player = event.getPlayer();
+		plugin.getLogger().info("Removing: " + player.getDisplayName());
+		signLocation.remove(player.getName());
+		lastMessage.remove(player.getName());
+		BlockMsgCmds.warpLocation.remove(player.getName());
+		stop.remove(player.getName());
+		return;
+	}
+	
+	@EventHandler
+	public void onPlayerInteract(PlayerInteractEvent event) {
+		Player player = event.getPlayer();
+		if(signLocation.containsKey(player.getName())) {
+			if (event.getAction().equals(Action.RIGHT_CLICK_BLOCK)) {
+				if (event.getClickedBlock().getState() instanceof Sign) {
+					Sign getMsg = (Sign) event.getClickedBlock().getState();
+					String msg = getMsg.getLine(0) + " " + getMsg.getLine(1) + " " + getMsg.getLine(2) + " " + getMsg.getLine(3);
+					plugin.getConfig().set("Location." + signLocation.get(player.getName()) + ".message", msg);
+					plugin.getConfig().set("Location." + signLocation.get(player.getName()) + ".creator", player.getDisplayName());
+					plugin.saveConfig();
+					String mesg = config.getString("Message.set.success");
+					mesg = msg.replace("%player%", player.getName());
+					mesg = ChatColor.translateAlternateColorCodes('&', mesg);
+					player.sendMessage(msg);
+					signLocation.remove(player.getName());
+					return;
+				}
+			}
+		}
+	}
+	
+	@EventHandler
+	public void onPlayerMove(PlayerMoveEvent event) {
+		Player player = event.getPlayer();
+		
+		if (event.getFrom().getBlock().getLocation() != event.getTo().getBlock().getLocation()) {
+			if (config.getConfigurationSection("Location") != null) {
+				if (config.getConfigurationSection("Location").getKeys(false).contains()) {
+					
+				}
+			}
+		}
+	}
+	
+/*	@EventHandler
+	public void onPlayerMove(PlayerMoveEvent event) {
+		Player player = event.getPlayer();
+		
+		if (event.getFrom().getBlock().getLocation() != event.getTo().getBlock().getLocation()) {
+
+		} else {
+			return;
+		}
+		
+		try {
+			if ()
+		}
+		
+		/*Player player = event.getPlayer();
+		
+		if (event.getFrom().getBlock().getLocation() != event.getTo().getBlock().getLocation()) {
+			String playerLocation = player.getWorld().toString() + " " + player.getLocation().getBlockX() + " " + player.getLocation().getBlockY() + " " + player.getLocation().getBlockZ();
+			String message = plugin.getConfig().getString("Location." + playerLocation + ".message");
+			try {
+				if (!lastMessage.get(player.getName()).equalsIgnoreCase(message)) {
+					lastMessage.put(player.getName(), message);
+					message = message.replace("%player%",player.getDisplayName());
+					message = ChatColor.translateAlternateColorCodes('&',message);
+					player.sendMessage(message);
+				}
+			} catch (NullPointerException e) {
+				try {
+					lastMessage.put(player.getName(), message);
+					message = message.replace("%player%",player.getDisplayName());
+					message = ChatColor.translateAlternateColorCodes('&',message);
+					player.sendMessage(message);
+				} catch (NullPointerException ex) {
+					lastMessage.remove(player.getName());
+				}
+			}
+			
+			try {
+				if (stop.containsKey(player.getName())) {
+					player.sendMessage(ChatColor.GOLD + "Warp");
+				}
+					
+				
+			} catch (NullPointerException e) {
+				try {
+					String world = (plugin.getConfig()).getString("Location." + playerLocation + ".warpWorld");
+					Server s = plugin.getServer();
+					World w = s.getWorld(world);
+					Location warpTo = new Location( w, plugin.getConfig().getDouble("Location." + playerLocation + ".warpX") + .5, plugin.getConfig().getDouble("Location." + playerLocation + ".warpY"), plugin.getConfig().getDouble("Location." + playerLocation + ".warpZ") + .5, plugin.getConfig().getInt("Location." + playerLocation + ".warpLook"), 0);
+					player.teleport(warpTo);
+				} catch (NullPointerException ex) {
+					
+				}
+			}
+			
+			try {
+				if (stop.containsKey(player.getName())) {
+					player.sendMessage(ChatColor.GOLD + "CMD");
+				}			
+			} catch (NullPointerException e) {
+				
+			}
+		}
+	}*/
+
+}

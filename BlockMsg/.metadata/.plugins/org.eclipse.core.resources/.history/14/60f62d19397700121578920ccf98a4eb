@@ -1,0 +1,432 @@
+/*
+ * Copyright 2013 ShadowLordAlpha (Bukkit username/pen name)
+ * 
+ * This file is part of Block Messenger.
+ *
+ *  Block Messenger is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  Block Messenger is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with Block Messenger.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+package com.gmail.alpha70.shadow;
+
+import java.util.HashMap;
+import java.util.Set;
+
+import org.bukkit.ChatColor;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandExecutor;
+import org.bukkit.command.CommandSender;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.entity.Player;
+
+public class BlockMsgCmds implements CommandExecutor {
+	
+	BlockMsg plugin;
+	Player player;
+	FileConfiguration config;
+	boolean isBlockMsg = false;
+	static HashMap<String, String> warpLocation = new HashMap<String, String>();
+	
+	public BlockMsgCmds(BlockMsg main) {
+		plugin = main;
+		config = main.getConfig();
+	}
+
+	@Override
+	public boolean onCommand(CommandSender sender, Command cmd, String cmdLable, String[] arg) {
+		
+		if (sender instanceof Player) {
+			player = (Player) sender;
+		} else {
+			plugin.getLogger().info("You must be a player to use this command!");
+			return true;
+		}
+		String senderLocation = player.getWorld().toString() + " " + player.getLocation().getBlockX() + " " + player.getLocation().getBlockY() + " " + player.getLocation().getBlockZ();
+		
+		if (cmd.getName().equalsIgnoreCase("bm")) {
+			if (arg.length == 0) {
+				if (sender.hasPermission("blockmsg.help")) {
+					sender.sendMessage(ChatColor.BLACK + "--------------------------------------");
+					sender.sendMessage(ChatColor.DARK_GREEN + "Block Message Help");
+					sender.sendMessage(ChatColor.BLACK + "--------------------------------------");
+					sender.sendMessage(ChatColor.GOLD + "bm: Shows the Block Message help");
+					sender.sendMessage(ChatColor.GOLD + "bm set [message]: Set a Block Message at Current Location");
+					sender.sendMessage(ChatColor.GOLD + "bm set %sign%: Set a Block Message at the current Locaion from a sign");
+					sender.sendMessage(ChatColor.GOLD + "bm del:Delete the Block Message at this Location");
+					sender.sendMessage(ChatColor.GOLD + "bm msg [message]: Set a new Block Message over an old one");
+					sender.sendMessage(ChatColor.GOLD + "bm start: Allow Commands and Warps to affect you");
+					sender.sendMessage(ChatColor.GOLD + "bm stop: Warps and Commands do not affect you");
+					sender.sendMessage(ChatColor.GOLD + "bm cmd [command(s)]: Set a new Commands at this Locaion");
+					sender.sendMessage(ChatColor.GOLD + "bm warp set: Set a warp Start point");
+					sender.sendMessage(ChatColor.GOLD + "bm warp to: Set a warp End point");
+					sender.sendMessage(ChatColor.RED + "bm delall [confirm]: Delete all Block Messages");
+					return true;
+					
+				} else {
+					if (config.getBoolean("Permissions.sendMsg")) {
+						String msg = config.getString("Permissions.help");
+						msg = msg.replace("%player%", player.getDisplayName());
+						msg = ChatColor.translateAlternateColorCodes('&', msg);
+						sender.sendMessage(msg);
+						return true;
+					} else {
+						return true;
+					}
+				}
+			}
+			
+			if (arg[0].equalsIgnoreCase("start")) {
+				if (sender.hasPermission("blockmsg.start")) {
+					if (arg.length == 1) {
+						BlockMsgListener.stop.remove(sender.getName());
+						String msg = config.getString("Message.start.success");
+						msg = msg.replace("%player%", player.getDisplayName());
+						msg = ChatColor.translateAlternateColorCodes('&', msg);
+						sender.sendMessage(msg);
+						return true;
+					} else {
+						String msg = config.getString("Message.start.fail");
+						msg = msg.replace("%player%", player.getDisplayName());
+						msg = ChatColor.translateAlternateColorCodes('&', msg);
+						sender.sendMessage(msg);
+						return true;
+					}
+				} else {
+					if (config.getBoolean("Permissions.sendMsg")) {
+						String msg = config.getString("Permissions.start");
+						msg = msg.replace("%player%", player.getDisplayName());
+						msg = ChatColor.translateAlternateColorCodes('&', msg);
+						sender.sendMessage(msg);
+						return true;
+					} else {
+						return true;
+					}
+				}
+			}
+			
+			if (arg[0].equalsIgnoreCase("stop")) {
+				if (sender.hasPermission("blockmsg.stop")) {
+					if (arg.length == 1) {
+						BlockMsgListener.stop.put(sender.getName(), "");
+						String msg = config.getString("Message.stop.success");
+						msg = msg.replace("%player%", player.getDisplayName());
+						msg = ChatColor.translateAlternateColorCodes('&', msg);
+						sender.sendMessage(msg);
+						return true;
+					} else {
+						String msg = config.getString("Message.stop.fail");
+						msg = msg.replace("%player%", player.getDisplayName());
+						msg = ChatColor.translateAlternateColorCodes('&', msg);
+						sender.sendMessage(msg);
+						return true;
+					}
+				} else {
+					if (config.getBoolean("Permissions.sendMsg")) {
+						String msg = config.getString("Permissions.stop");
+						msg = msg.replace("%player%", player.getDisplayName());
+						msg = ChatColor.translateAlternateColorCodes('&', msg);
+						sender.sendMessage(msg);
+						return true;
+					} else {
+						return true;
+					}
+				}
+			}
+			
+			if (arg[0].equalsIgnoreCase("warp")) {
+				if (sender.hasPermission("blockmsg.warp")) {
+					if (arg.length ==  2) {
+						if (arg[1].equalsIgnoreCase("set")) {
+							warpLocation.put(player.getName(), senderLocation);
+							sender.sendMessage(ChatColor.GOLD + "Setting Warp From");
+							return true;
+						}
+						if (warpLocation.containsKey(sender.getName())) {
+							if (arg[1].equalsIgnoreCase("to")) {
+								config.set("Location." + warpLocation.get(player.getName()) + ".warpWorld", player.getLocation().getWorld().getName().toString());
+								config.set("Location." + warpLocation.get(player.getName()) + ".warpX", player.getLocation().getBlockX());
+								config.set("Location." + warpLocation.get(player.getName()) + ".warpY", player.getLocation().getBlockY());
+								config.set("Location." + warpLocation.get(player.getName()) + ".warpZ", player.getLocation().getBlockZ());
+								config.set("Location." + warpLocation.get(player.getName()) + ".warpCreator",player.getDisplayName());
+								config.set("Location." + warpLocation.get(player.getName()) + ".warpLook",player.getLocation().getYaw());
+								plugin.saveConfig();
+								warpLocation.remove(player.getName());
+								String msg = config.getString("Message.warp.success");
+								msg = msg.replace("%player%", player.getDisplayName());
+								msg = ChatColor.translateAlternateColorCodes('&', msg);
+								sender.sendMessage(msg);
+								return true;
+							}
+						} else {
+							String msg = config.getString("Message.warp.fail");
+							msg = msg.replace("%player%", player.getDisplayName());
+							msg = ChatColor.translateAlternateColorCodes('&', msg);
+							sender.sendMessage(msg);
+							return true;
+						}
+					} else {
+						String msg = config.getString("Message.warp.fail");
+						msg = msg.replace("%player%", player.getDisplayName());
+						msg = ChatColor.translateAlternateColorCodes('&', msg);
+						sender.sendMessage(msg);
+						return true;
+					}
+				} else {
+					if (config.getBoolean("Permissions.sendMsg")) {
+						String msg = config.getString("Permissions.warp");
+						msg = msg.replace("%player%", player.getDisplayName());
+						msg = ChatColor.translateAlternateColorCodes('&', msg);
+						sender.sendMessage(msg);
+						return true;
+					} else {
+						return true;
+					}
+				}
+			}
+			
+			if (arg[0].equalsIgnoreCase("cmd")) {
+				if (sender.hasPermission("blockmsg.cmd")) {
+					if (arg.length > 1) {
+						String message = "";
+						for (int i = 1; i < arg.length; i++) {
+							message = message + arg[i] + " ";
+						}
+						config.set("Location." + senderLocation + ".command", message);
+						config.set("Location." + senderLocation + ".commandCreator", sender.getName());
+						plugin.saveConfig();
+						String msg = config.getString("Message.cmd.success");
+						msg = msg.replace("%player%", player.getDisplayName());
+						msg = ChatColor.translateAlternateColorCodes('&', msg);
+						sender.sendMessage(msg);
+						return true;
+					} else {
+						String msg = config.getString("Message.cmd.fail");
+						msg = msg.replace("%player%", player.getDisplayName());
+						msg = ChatColor.translateAlternateColorCodes('&', msg);
+						sender.sendMessage(msg);
+						return true;
+					}
+				} else {
+					if (config.getBoolean("Permissions.sendMsg")) {
+						String msg = config.getString("Permissions.cmd");
+						msg = msg.replace("%player%", player.getDisplayName());
+						msg = ChatColor.translateAlternateColorCodes('&', msg);
+						sender.sendMessage(msg);
+						return true;
+					} else {
+						return true;
+					}
+				}
+			}
+			
+			if (arg[0].equalsIgnoreCase("list")) {
+				if (sender.hasPermission("blockmsg.list")) {
+					if (config.getConfigurationSection("Location") != null) {
+						Set<String> s = config.getConfigurationSection("Location").getKeys(false);
+						if (s != null) {
+							sender.sendMessage(ChatColor.BLACK + "--------------------------------------");
+							sender.sendMessage(ChatColor.DARK_GREEN + "Block Message Help");
+							sender.sendMessage(ChatColor.BLACK + "--------------------------------------");
+							for (String a : s) {
+								sender.sendMessage(a);
+							}
+							return true;
+						} else {
+							String msg = config.getString("Message.list.fail");
+							msg = msg.replace("%player%", player.getDisplayName());
+							msg = ChatColor.translateAlternateColorCodes('&', msg);
+							sender.sendMessage(msg);
+							return true;
+						}
+					}
+				} else {
+					if (config.getBoolean("Permissions.sendMsg")) {
+						String msg = config.getString("Permissions.list");
+						msg = msg.replace("%player%", player.getDisplayName());
+						msg = ChatColor.translateAlternateColorCodes('&', msg);
+						sender.sendMessage(msg);
+						return true;
+					} else {
+						return true;
+					}
+				}
+			}
+			
+			if (arg[0].equalsIgnoreCase("set")) {
+				if (sender.hasPermission("blockmsg.set")) {
+					if (arg.length > 1) {
+						if (config.getConfigurationSection("Location") != null) {
+							if (!config.getConfigurationSection("Location").getKeys(false).contains("Location." + senderLocation)) {
+								if (arg[1].equalsIgnoreCase("%sign%")) {
+									if (BlockMsgListener.signLocation.containsKey(sender.getName())) {
+										BlockMsgListener.signLocation.remove(sender.getName());
+										sender.sendMessage(ChatColor.RED + "No Longer Setting a Block Message From a Sign!");
+										return true;
+									} else {
+										BlockMsgListener.signLocation.put(sender.getName(), senderLocation);
+										sender.sendMessage(ChatColor.GOLD + "Now Setting Block Message From a Sign!");
+										return true;
+									}
+								} else {
+									String message = "";
+									for (int i = 1; i < arg.length; i++) {
+										message = message + arg[i] + " ";
+									}
+									config.set("Location." + senderLocation + ".message", message);
+									config.set("Location." + senderLocation + ".creator", sender.getName());
+									plugin.saveConfig();
+									String msg = config.getString("Message.set.success");
+									msg = msg.replace("%player%", player.getDisplayName());
+									msg = ChatColor.translateAlternateColorCodes('&', msg);
+									sender.sendMessage(msg);
+									return true;
+								}
+							} else {
+								String msg = config.getString("Message.set.fail");
+								msg = msg.replace("%player%", player.getDisplayName());
+								msg = ChatColor.translateAlternateColorCodes('&', msg);
+								sender.sendMessage(msg);
+								return true;
+							}
+						}
+					} else {
+						String msg = config.getString("Message.set.fail");
+						msg = msg.replace("%player%", player.getDisplayName());
+						msg = ChatColor.translateAlternateColorCodes('&', msg);
+						sender.sendMessage(msg);
+						return true;
+					}
+				} else {
+					if (config.getBoolean("Permissions.sendMsg")) {
+						String msg = config.getString("Permissions.set");
+						msg = msg.replace("%player%", player.getDisplayName());
+						msg = ChatColor.translateAlternateColorCodes('&', msg);
+						sender.sendMessage(msg);
+						return true;
+					} else {
+						return true;
+					}
+				}
+			}
+			
+			if (arg[0].equalsIgnoreCase("creator")) {
+				if (sender.hasPermission("blockmsg.creator")) {
+					if (arg.length == 1) {
+						if (config.getConfigurationSection("Location") != null) {
+							if (config.getConfigurationSection("Location").getKeys(false).contains("Location." + senderLocation)) {
+								String msg = config.getString("Message.creator.success");
+								msg = msg.replace("%player%", player.getDisplayName()).replace("%creator%", config.getString("Location." + senderLocation + ".creator"));
+								msg = ChatColor.translateAlternateColorCodes('&', msg);
+								sender.sendMessage(msg);
+								return true;
+							} else {
+								
+							}
+						}
+					} else {
+						String msg = config.getString("Message.creator.fail");
+						msg = msg.replace("%player%", player.getDisplayName());
+						msg = ChatColor.translateAlternateColorCodes('&', msg);
+						sender.sendMessage(msg);
+						return true;
+					}
+				} else {
+					String msg = config.getString("Permission.creator");
+					msg = msg.replace("%player%", player.getDisplayName());
+					msg = ChatColor.translateAlternateColorCodes('&', msg);
+					sender.sendMessage(msg);
+					return true;
+				}
+					
+			}
+			
+			if (arg[0].equalsIgnoreCase("del")) {
+				if (sender.hasPermission("blockmsg.delete")) {
+					if (arg.length == 1) {
+						if (config.getConfigurationSection("Location") != null) {
+							if (config.getConfigurationSection("Location").getKeys(false).contains("Location." + senderLocation)) {
+								config.set("Location." + senderLocation, null);
+								plugin.saveConfig();
+								String msg = config.getString("Message.delete.success");
+								msg = msg.replace("%player%", player.getDisplayName());
+								msg = ChatColor.translateAlternateColorCodes('&', msg);
+								sender.sendMessage(msg);
+								return true;
+							} else {
+								String msg = config.getString("Message.delete.fail");
+								msg = msg.replace("%player%", player.getDisplayName());
+								msg = ChatColor.translateAlternateColorCodes('&', msg);
+								sender.sendMessage(msg);
+								return true;
+							}
+						}
+					} else {
+						String msg = config.getString("Message.delete.fail");
+						msg = msg.replace("%player%", player.getDisplayName());
+						msg = ChatColor.translateAlternateColorCodes('&', msg);
+						sender.sendMessage(msg);
+						return true;
+					}
+				} else {
+					String msg = config.getString("Permission.delete");
+					msg = msg.replace("%player%", player.getDisplayName());
+					msg = ChatColor.translateAlternateColorCodes('&', msg);
+					sender.sendMessage(msg);
+					return true;
+				}
+			}
+			
+			if (arg[0].equalsIgnoreCase("delall")) {
+				if (sender.hasPermission("blockmsg.delall")) {
+					if (arg.length == 2) {
+						if (arg[1].equalsIgnoreCase("yes")) {
+							if (config.getConfigurationSection("Location") != null) {
+								Set<String> s = config.getConfigurationSection("Location").getKeys(false);
+								if (s != null) {
+									for (String a : s) {
+										config.set(a , null);
+									}
+									plugin.saveConfig();
+									String msg = config.getString("Message.delall.success");
+									msg = msg.replace("%player%", player.getDisplayName());
+									msg = ChatColor.translateAlternateColorCodes('&', msg);
+									sender.sendMessage(msg);
+									return true;
+								}
+							}
+						} else {
+							String msg = config.getString("Message.delall.fail");
+							msg = msg.replace("%player%", player.getDisplayName());
+							msg = ChatColor.translateAlternateColorCodes('&', msg);
+							sender.sendMessage(msg);
+							return true;
+						}
+					} else {
+						String msg = config.getString("Message.delall.fail");
+						msg = msg.replace("%player%", player.getDisplayName());
+						msg = ChatColor.translateAlternateColorCodes('&', msg);
+						sender.sendMessage(msg);
+						return true;
+					}
+				} else {
+					String msg = config.getString("Permission.delall");
+					msg = msg.replace("%player%", player.getDisplayName());
+					msg = ChatColor.translateAlternateColorCodes('&', msg);
+					sender.sendMessage(msg);
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+}

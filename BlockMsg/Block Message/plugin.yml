@@ -1,0 +1,60 @@
+name: BlockMsg
+main: com.gmail.alpha70.shadow.BlockMsg
+version: 1.4.1
+
+commands:
+   bm:
+      description: Shows the Block Message help
+      usage: /<command>
+      
+permissions:
+    blockmsg.*:
+        description: Gives access to all Block Message commands
+        children:
+            blockmsg.set: true
+            blockmsg.delete: true
+            blockmsg.deleteall: true
+            blockmsg.msg: true
+            blockmsg.list: true
+            blockmsg.help: true
+            blockmsg.creator: true
+            blockmsg.warp: true
+            blockmsg.start: true
+            blockmsg.stop: true
+            blockmsg.cmd: true
+    blockmsg.cmd:
+        description: Set Commands to Block Messages
+        default: op
+    blockmsg.stop:
+        description: Stop Commands and Warps from affecting you
+        default: op
+    blockmsg.start:
+        description: Start Commands and Warps affection you
+        default: op
+    blockmsg.warp:
+        description: Set Warps to Block Messages
+        default: op
+    blockmsg.help:
+        description: Show the Block Message help
+        default: op
+    blockmsg.list:
+        description: Show a list of all Block Messages
+        default: op
+    blockmsg.set:
+        description: Set a Block Message
+        default: op
+    blockmsg.msg:
+        description: change a Block Message
+        default: op
+    blockmsg.delete:
+        description: Delete the current Block Message
+        default: op
+    blockmsg.deleteall:
+        description: Delete all Block Messages
+        default: op
+    blockmsg.creator:
+        description: Show who created the Block Message
+        default: op
+    blockmsg.pos:
+        description: set an area
+        default: op
